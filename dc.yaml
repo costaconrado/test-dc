@@ -1,0 +1,94 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: osim-ui-deploy
+parameters:
+  - name: name
+    description: The name of the application
+    value: osim-ui
+  - name: image
+    displayName: image
+    description: image
+    required: true
+  - name: project
+    displayName: Project
+  - name: port
+    displayName: Port
+    description: The port that the application container exposes
+    value: "8080"
+  - name: appcode
+    displayName: CMDB ID
+    description: The CMDB ID of the application
+  - name: environment
+    displayName: Runtime environment
+    description: The environment app is running (e.g. stage)
+    required: true
+objects:
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      name: ${name}
+      namespace: ${project}
+      labels:
+        app: osim-ui
+        paas.redhat.com/appcode: ${appcode}
+    spec:
+      replicas: 1
+      selector:
+        app: osim
+        name: ${name}
+      strategy:
+        type: Recreate
+        activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          name: ${name}
+          labels:
+            name: ${name}
+            app: osim
+        spec:
+          containers:
+            - name: ${name}
+              env:
+              - name: OSIM_RUNTIME
+                value: '{"backends":{"osidb":"https://example.com","bugzilla":"https://example.com"},"osimVersion":"0"}'
+              - name: OSIM_ENV
+                value: stage
+              - name: OSIM_BACKENDS_OSIDB
+                value: https://example.com
+              - name: OSIM_BACKENDS_OSIDB_AUTH
+                value: kerberos
+              - name: OSIM_BACKENDS_JIRA
+                value: https://example.com
+              - name: OSIM_BACKENDS_BUGZILLA
+                value: https://example.com
+              - name: OSIM_READONLY_MODE
+                value: "false"
+              image: "${image}"
+              ports:
+                - containerPort: ${{port}}
+              volumeMounts:
+                - mountPath: /var/log/nginx
+                  name: osim-ui-logs
+          volumes:
+          - emptyDir: {}
+            name: osim-ui-logs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
